@@ -48,23 +48,23 @@ def main():
     if len(sys.argv) != 3:
         print("Uso: python3 vida.py <archivo_estado_inicial> <generaciones>", file=sys.stderr)
         sys.exit(1)
-
+    
     ruta = sys.argv[1]
     try:
         generaciones = int(sys.argv[2])
     except ValueError:
         print("Error: generaciones debe ser un entero", file=sys.stderr)
         sys.exit(1)
-
+    
     if generaciones < 0:
         print("Error: generaciones debe ser no negativo", file=sys.stderr)
         sys.exit(1)
-
+    
     grilla = leer_grilla(ruta)
-
+    
     for _ in range(generaciones):
         grilla = siguiente_generacion(grilla)
-
+    
     print('\n'.join(grilla))
 
 if __name__ == '__main__':
