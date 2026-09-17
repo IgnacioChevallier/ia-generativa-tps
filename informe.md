@@ -107,6 +107,32 @@ cache es el comportamiento correcto dado que no hay caching disponible), y sugie
 ese request en particular, no un cache real — no puede haber cache genuino si la
 infraestructura entera lo tiene deshabilitado.
 
+**Por qué el `cached_tokens > 0` del intento 1 no es evidencia de corridas previas sin
+entregar.** La lectura natural de un cache hit en el primer intento es que hubo requests
+anteriores que calentaron el cache y no se entregaron. Los propios datos del repo la
+descartan:
+
+1. **La hipótesis predice lo contrario de lo que se observa.** Si una corrida previa
+   hubiera dejado el prefijo estático cacheado, los intentos 2 y 3 — que mandan ese mismo
+   prefijo, carácter por carácter, 27 y 32 minutos después — tendrían que haber pegado en
+   ese cache también, y con más razón. Dieron `cached=0` los dos. Un cache que solo existe
+   para la primera corrida y desaparece para las dos siguientes no es un cache.
+2. **El 100% es aritméticamente imposible para un cache por prefijo.** El intento 1
+   reporta `cached=911` sobre `prompt=911`. Un cache por prefijo solo puede cubrir el
+   prefijo repetido, nunca el mensaje entero, porque el final del prompt es contenido que
+   el proveedor no vio nunca. Un hit genuino tiene que ser parcial.
+3. **La anomalía aparece también donde no puede haber prefijo.** El primer turno de esa
+   misma conversación es un `hola` de chequeo de conectividad, el primer mensaje de una
+   conversación nueva, y reporta `cached=65` de `prompt=85`. No hay ningún turno anterior
+   del que pueda venir ese prefijo.
+4. **El gasto no logueado que sí existe en este repo usó otro prompt.** El smoke test de
+   `openrouter.py` (documentado en el ejercicio 3) le manda a este modelo la pregunta de
+   los números primos, no el prompt de Conway ni `hola`, así que no puede ser el origen de
+   un prefijo cacheado para ninguno de los dos.
+
+Lo consistente con las cuatro observaciones es que el `cached_tokens` de ese request lo
+reportó mal el proveedor que atendió esa llamada, no que exista una corrida escondida.
+
 **Conclusión del hallazgo:** con el catálogo de proveedores de OpenRouter vigente al
 2026-09-16, es imposible demostrar `cached_tokens > 0` de forma reproducible con
 `deepseek/deepseek-v4-flash-0731`, independientemente de cómo se diseñe el prompt — la
