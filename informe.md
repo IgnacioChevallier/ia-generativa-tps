@@ -53,7 +53,68 @@ la API estilo OpenAI.
 
 ## Ejercicio 1 — Interfaz de chat, cuatro modelos
 
-_(cubierto por `openrouter.py` y `chat_interface.py`; logs de prueba en `logs/`)_
+La interfaz es `chat_interface.py` sobre el cliente único `openrouter.py`. Hay un log de
+prueba por cada uno de los 4 modelos en `logs/` (`*_20260915_*.md`), cada uno con rol,
+mensaje y el usage de cada respuesta.
+
+### Slot 2 — cache hit explícito (`cache_control`)
+
+Claude Haiku 4.5 no cachea prompts chicos (mínimo ~4096 tokens), así que la prueba manda un
+contexto estático grande como mensaje `system`, marcado con `cache_control: ephemeral` en
+`_mark_cache()`. Dos pasadas del mismo contexto
+(`logs/anthropic_claude-haiku-4.5_20260915_204816.md`):
+
+| Pasada | `prompt_tokens` | `cached_tokens` | Costo |
+|---|---|---|---|
+| 1ª | 9035 | 0 | $0.011511 |
+| 2ª | 9088 | **9023** (99%) | **$0.001097** |
+
+El costo de entrada baja 10 veces con el cache hit. Es el único caching que el TP pudo
+demostrar funcionando (ver el hallazgo de DeepSeek en el ejercicio 2).
+
+### Slot 1 — efecto del nivel de esfuerzo
+
+El `reasoning.effort` se fija con `/effort` y queda registrado en el log como bloque
+`## config`, para que cada corrida sea auditable. Mismo prompt (un problema de teoría de
+números que obliga a razonar), cada corrida en una conversación nueva para que el contexto
+no contamine el resultado:
+
+| Nivel | Log | `reasoning_tokens` | Costo |
+|---|---|---|---|
+| `minimal` | `openai_gpt-5.6-luna_20260917_173647.md` | 399 | $0.000503 |
+| `minimal` | `openai_gpt-5.6-luna_20260917_173655.md` | 658 | $0.000814 |
+| `minimal` | `openai_gpt-5.6-luna_20260917_173702.md` | 784 | $0.000965 |
+| `high` | `openai_gpt-5.6-luna_20260917_173710.md` | 468 | $0.000586 |
+| `high` | `openai_gpt-5.6-luna_20260917_173717.md` | 818 | $0.001006 |
+| `high` | `openai_gpt-5.6-luna_20260917_173725.md` | 633 | $0.000785 |
+
+**Hallazgo: con este modelo el efecto del `effort` existe, pero es más chico que el ruido
+entre corridas idénticas.** En las 3+3 corridas logueadas de arriba las medianas quedan
+prácticamente iguales (658 en `minimal` contra 633 en `high`): el efecto no se ve. Para
+decidir si existía se repitió el mismo prompt hasta n=8 por nivel (las corridas extra se
+hicieron llamando a `chat()` directo, sin pasar por la interfaz, y por eso no tienen log —
+su costo está contabilizado en el ejercicio 3):
+
+| Nivel | n | Mediana | Media | Rango |
+|---|---|---|---|---|
+| `minimal` | 8 | 484 | 553 | 327 – 934 |
+| `high` | 8 | 649 | 641 | 468 – 838 |
+
+Recién con n=8 aparece la señal: `high` razona ~1,3 veces más que `minimal` en mediana.
+Pero los rangos se superponen casi por completo, así que **una sola corrida por nivel puede
+dar el resultado invertido** — de hecho el primer par que se corrió dio `minimal`=934 contra
+`high`=516. La conclusión práctica es que en este modelo el `effort` es una preferencia
+estadística, no un dial determinístico, y que medirlo con una corrida por nivel no sirve.
+Esto es coherente con lo que se ve en el ejercicio 2 con DeepSeek, donde dos corridas
+idénticas con `effort=high` dieron 1071 y 14356 tokens de razonamiento.
+
+### Slot 3 — salidas estructuradas
+
+`/schema <json>` fija un `response_format` de tipo `json_schema`. La prueba está en
+`logs/google_gemini-3.7-flash_20260915_204826.md`, donde la respuesta sale como
+`{"primos":15}` en vez de texto libre. Ese log es anterior al cambio que hace que el
+schema también quede escrito en el log como bloque `## config`, así que ahí se ve el
+efecto del schema pero no el schema en sí.
 
 ## Ejercicio 2 — El target en 1 prompt
 
@@ -177,20 +238,31 @@ Ahorro real: **$0**. Como se documentó en el hallazgo del ejercicio 2, los 28 p
 ### Gasto total en USD vs. dashboard de OpenRouter
 
 Suma de los logs de los 3 intentos del ejercicio 2: **$0.006431**.
-Suma de los 4 logs de prueba del ejercicio 1 (uno por modelo, ver `logs/`): **$0.013726**
-(dominado por el primer turno de Anthropic, `$0.011511`, sin cache — la segunda pasada del
-mismo contexto sí muestra el cache hit del slot 2: `cached=9023` de `9088`, costo baja a
-`$0.001097`).
+Suma de los logs de prueba del ejercicio 1 (`logs/`): **$0.018385**. Se descompone en los
+4 logs originales, uno por modelo (**$0.013726**, dominados por el primer turno de
+Anthropic, `$0.011511` sin cache — la segunda pasada del mismo contexto muestra el cache
+hit del slot 2: `cached=9023` de `9088`, y el costo baja a `$0.001097`), más los 6 logs de
+la medición de `effort` del slot 1 (**$0.004659**), agregados el 2026-09-17.
 
-**Total combinado (todos los logs del repo, ejercicios 1 y 2): $0.013726 + $0.006431 =
-$0.020157.**
+**Total combinado (todos los logs del repo, ejercicios 1 y 2): $0.018385 + $0.006431 =
+$0.024816.**
 
 **Gasto real de la cuenta, consultado el 2026-09-17 vía `GET /api/v1/key`
-(campo `usage`, acumulado desde la creación de la key): $0.053963798.**
+(campo `usage`, acumulado desde la creación de la key): $0.067740.**
 
-**Diferencia sin explicar por los logs: $0.033807 (63% del gasto real de la cuenta).**
+**Diferencia sin explicar por los logs: $0.042924 (63% del gasto real de la cuenta).**
 
-Hipótesis de la diferencia: `openrouter.py` tiene un bloque `if __name__ == "__main__":`
+La diferencia tiene dos partes, una identificada con precisión y otra estimada.
+
+**Parte identificada: $0.009117.** Es la investigación del `effort` del slot 1 descrita en
+el ejercicio 1. Para separar señal de ruido hubo que llevar el experimento a n=8 por nivel,
+y esas corridas extra se hicieron llamando a `chat()` directo en vez de pasar por la
+interfaz, así que no dejaron log. El número es exacto porque se consultó `GET /api/v1/key`
+antes ($0.053964) y después ($0.067740) de esa tanda: la diferencia es $0.013776, de los
+cuales $0.004659 sí quedaron logueados (las 6 corridas de la tabla) y $0.009117 no.
+
+**Parte estimada: $0.033807.** Es el resto, anterior a esta medición. La hipótesis:
+`openrouter.py` tiene un bloque `if __name__ == "__main__":`
 que prueba los 4 slots en vivo (3 niveles de `effort`, 2 pasadas de cache, 1 llamada con
 JSON Schema, 1 a DeepSeek) — corridas reales, con costo real, pero que **no pasan por
 `chat_interface.py`** y por lo tanto no generan ningún log `.md`. Cada corrida de
@@ -208,8 +280,15 @@ cuáles.
 
 Esto no afecta la admisibilidad del ejercicio 2 (esos 3 intentos sí tienen su log completo
 y están arriba), pero sí significa que el gasto total de la cuenta no es 100% reconstruible
-solo a partir de `logs/` — el smoke test de `openrouter.py` es la fuente de gasto no
-auditable de este repo.
+solo a partir de `logs/` — las llamadas que no pasan por `chat_interface.py` son la fuente
+de gasto no auditable de este repo.
+
+**La lección, que vale para las dos partes:** toda llamada que no pasa por
+`chat_interface.py` gasta plata sin dejar rastro auditable, y es fácil hacerlo sin querer
+— nos volvió a pasar el 2026-09-17 mientras medíamos el `effort`, ya sabiendo del problema.
+Si hubiera que rehacer el TP, el cambio sería que `chat()` escriba siempre una línea de
+usage en un log común, sea quien sea que la llame, de modo que la contabilidad no dependa
+de acordarse de usar la interfaz.
 
 ### Conclusión
 
