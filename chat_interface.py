@@ -13,6 +13,9 @@ Comandos dentro del chat:
     /effort <nivel>   fija reasoning.effort: minimal|low|medium|high|off (slot 1, y opcional en otros)
     /schema <json>    fija un JSON Schema para response_format (slot 3); "/schema off" lo saca
     /system <texto>   agrega un mensaje system a la conversación
+    /file <ruta>      manda el contenido completo de un archivo como un único mensaje
+                      (la terminal parte un pegado multilínea en un mensaje por línea;
+                      para prompts largos, guardalos en un .txt y usá este comando)
     /exit             termina el chat
 """
 import json
@@ -79,7 +82,26 @@ def main():
     model = elegir_modelo()
     messages, log_path, effort, schema = nueva_conversacion(model)
 
-    print("Escribí tu mensaje, o un comando (/model, /effort, /schema, /system, /exit).\n")
+    print("Escribí tu mensaje, o un comando (/model, /effort, /schema, /system, /file, /exit).\n")
+
+    def enviar(texto):
+        messages.append({"role": "user", "content": texto})
+        log_append(log_path, f"## user\n\n{texto}\n\n")
+        try:
+            r = chat(model, messages, effort=effort, json_schema=schema)
+        except Exception as e:
+            print(f"Error: {e}")
+            messages.pop()
+            log_append(log_path, f"## error\n\n{e}\n\n")
+            return
+        messages.append({"role": "assistant", "content": r["content"]})
+        usage_str = formatear_usage(r["usage"])
+        print(f"\n{model}: {r['content']}\n")
+        print(f"[usage] {usage_str}\n")
+        log_append(
+            log_path,
+            f"## assistant\n\n{r['content']}\n\n**Usage:** {usage_str}\n\n",
+        )
 
     while True:
         try:
@@ -126,25 +148,21 @@ def main():
                 print("(system agregado)")
             continue
 
-        messages.append({"role": "user", "content": entrada})
-        log_append(log_path, f"## user\n\n{entrada}\n\n")
-
-        try:
-            r = chat(model, messages, effort=effort, json_schema=schema)
-        except Exception as e:
-            print(f"Error: {e}")
-            messages.pop()
-            log_append(log_path, f"## error\n\n{e}\n\n")
+        if entrada.startswith("/file"):
+            ruta = entrada[len("/file"):].strip()
+            if not ruta:
+                print("Uso: /file <ruta-al-prompt.txt>")
+                continue
+            try:
+                texto = Path(ruta).expanduser().read_text(encoding="utf-8").strip()
+            except OSError as e:
+                print(f"No pude leer el archivo: {e}")
+                continue
+            print(f"(mandando {len(texto)} caracteres desde {ruta})")
+            enviar(texto)
             continue
 
-        messages.append({"role": "assistant", "content": r["content"]})
-        usage_str = formatear_usage(r["usage"])
-        print(f"\n{model}: {r['content']}\n")
-        print(f"[usage] {usage_str}\n")
-        log_append(
-            log_path,
-            f"## assistant\n\n{r['content']}\n\n**Usage:** {usage_str}\n\n",
-        )
+        enviar(entrada)
 
 
 if __name__ == "__main__":
