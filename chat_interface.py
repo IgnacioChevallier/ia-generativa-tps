@@ -124,6 +124,7 @@ def main():
             partes = entrada.split(maxsplit=1)
             nivel = partes[1].strip() if len(partes) > 1 else "off"
             effort = None if nivel == "off" else nivel
+            log_append(log_path, f"## config\n\n`reasoning.effort = {effort}`\n\n")
             print(f"(effort = {effort})")
             continue
 
@@ -131,10 +132,12 @@ def main():
             resto = entrada[len("/schema"):].strip()
             if resto in ("", "off"):
                 schema = None
+                log_append(log_path, "## config\n\n`response_format = off`\n\n")
                 print("(schema off)")
             else:
                 try:
                     schema = json.loads(resto)
+                    log_append(log_path, f"## config\n\n`response_format.schema = {resto}`\n\n")
                     print("(schema seteado)")
                 except json.JSONDecodeError as e:
                     print(f"JSON Schema inválido: {e}")
