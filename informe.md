@@ -185,8 +185,4 @@ contabilidad no dependa de acordarse de usar la interfaz.
 ### Conclusión
 
 El costo lo dominó la variabilidad del razonamiento, no el prompt: 13× entre dos corridas
-idénticas con `effort=high`. El caching que la consigna esperaba demostrar no está
-disponible en ningún proveedor de DeepSeek detrás de OpenRouter, así que no es una perilla
-que podamos tocar. Para bajar el costo sin perder el "1 prompt" cambiaríamos
-`reasoning.effort="high"` por `reasoning.max_tokens=1500` (apenas por encima de lo que usó
-el ganador): acota el gasto máximo por corrida sin depender de que el caching funcione.
+idénticas con `effort=high`. El caching que la consigna esperaba demostrar no está disponible en ningún proveedor de DeepSeek detrás de OpenRouter, así que no es una perilla que podamos tocar. Para bajar el costo sin perder el "1 prompt" cambiaríamos `reasoning.effort="high"` por `reasoning.max_tokens=1500` (apenas por encima de lo que usó el ganador): acota el gasto máximo por corrida sin depender de que el caching funcione.
