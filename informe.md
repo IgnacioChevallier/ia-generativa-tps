@@ -125,7 +125,59 @@ que no hubo ningún tipo de respuesta cacheada o reusada, solo el prompt de entr
 
 ## Ejercicio 3 — La cuenta final
 
-_Pendiente  tabla de tokens/costos consolidada de los 3
-intentos de arriba, reconciliación contra el dashboard de OpenRouter, y conclusión de tres
-líneas. Los datos crudos de cada intento ya están en la tabla del ejercicio 2 y en sus
-logs — falta sumar totales y contrastar contra el dashboard de actividad de la cuenta._
+### Tokens y costo por intento
+
+Desglose turno por turno de los 3 intentos del ejercicio 2 (fuente: `logs/deepseek_deepseek-v4-flash-0731_2026091*.md`). El intento 1 incluye un turno extra (`hola`, chequeo de conectividad sin querer en la misma conversación) que se cuenta aparte porque no es parte del prompt de Conway.
+
+| Intento | Turno | `prompt_tokens` (entrada) | `completion_tokens` (salida, incluye razonamiento) | `cached_tokens` | `reasoning_tokens` | Costo |
+|---|---|---|---|---|---|---|
+| 1 | `hola` (conectividad) | 85 | 37 | 65 | 22 | $0.000005 |
+| 1 | prompt Conway | 911 | 9684 | 911 | 9264 | $0.000978 |
+| 1 — **subtotal** | | **996** | **9721** | **976** | **9286** | **$0.000983** |
+| 2 — **ganador** | prompt Conway | 813 | 1699 | 0 | 1071 | $0.000355 |
+| 3 | prompt Conway | 892 | 14699 | 0 | 14356 | $0.005093 |
+| **Total (3 intentos)** | | **2701** | **26119** | **976** | **24713** | **$0.006431** |
+
+`completion_tokens` incluye los `reasoning_tokens`: por ejemplo, en el intento 2 los 1699 tokens de salida se componen de 1071 de razonamiento + 628 de código/texto de respuesta.
+
+### Tokens de pensamiento y facturación
+
+`deepseek/deepseek-v4-flash-0731` sí devuelve `reasoning_tokens` en los tres intentos (a diferencia de la serie *o* de OpenAI, que la consigna advierte que puede razonar sin exponerlos). Se facturan como parte de `completion_tokens`, al precio de salida del modelo ($0,12 por millón de tokens): no hay una tarifa separada para razonamiento en OpenRouter para este modelo. Esto explica por qué el intento 3 (14356 tokens de razonamiento) costó 14 veces más que el intento 2 (1071 tokens) con el mismo prompt — el gasto está dominado casi por completo por cuánto decide razonar el modelo, no por el tamaño del prompt.
+
+### Tokens cacheados y ahorro
+
+Ahorro real: **$0**. Como se documentó en el hallazgo del ejercicio 2, los 28 proveedores que sirven este modelo detrás de OpenRouter tienen `supports_implicit_caching: false`, así que no hay caching disponible para `deepseek/deepseek-v4-flash-0731` con el catálogo vigente al 2026-09-16, sin importar cómo se diseñe el prompt. Los 976 `cached_tokens` del intento 1 son una anomalía puntual del usage de ese request (no reproducible en los intentos 2 y 3, con el mismo prefijo estático), no un ahorro genuino — por eso no se cuenta como ahorro real.
+
+### Gasto total en USD vs. dashboard de OpenRouter
+
+Suma de los logs de los 3 intentos del ejercicio 2: **$0.006431**.
+Suma de los 4 logs de prueba del ejercicio 1 (uno por modelo, ver `logs/`): **$0.013726**
+(dominado por el primer turno de Anthropic, `$0.011511`, sin cache — la segunda pasada del
+mismo contexto sí muestra el cache hit del slot 2: `cached=9023` de `9088`, costo baja a
+`$0.001097`).
+
+**Total combinado (todos los logs del repo, ejercicios 1 y 2): $0.013726 + $0.006431 =
+$0.020157.**
+
+**Gasto real de la cuenta, consultado el 2026-09-17 vía `GET /api/v1/key`
+(campo `usage`, acumulado desde la creación de la key): $0.053963798.**
+
+**Diferencia sin explicar por los logs: $0.033807 (63% del gasto real de la cuenta).**
+
+Hipótesis de la diferencia: `openrouter.py` tiene un bloque `if __name__ == "__main__":`
+que prueba los 4 slots en vivo (3 niveles de `effort`, 2 pasadas de cache, 1 llamada con
+JSON Schema, 1 a DeepSeek) — corridas reales, con costo real, pero que **no pasan por
+`chat_interface.py`** y por lo tanto no generan ningún log `.md`. Cada corrida de
+`python3 openrouter.py` durante el desarrollo del ejercicio 1 gastó dinero sin dejar
+registro. Es consistente en magnitud: una sola llamada con `effort=high` ya costó
+`$0.005093` en el ejercicio 2 (intento 3); varias corridas de ese smoke test durante el
+desarrollo explican fácilmente los `$0.0338` de diferencia.
+
+Esto no afecta la admisibilidad del ejercicio 2 (esos 3 intentos sí tienen su log completo
+y están arriba), pero sí significa que el gasto total de la cuenta no es 100% reconstruible
+solo a partir de `logs/` — el smoke test de `openrouter.py` es la fuente de gasto no
+auditable de este repo.
+
+### Conclusión
+
+El costo del ejercicio 2 estuvo dominado por la variabilidad del razonamiento, no por el prompt: entre dos corridas del mismo prompt con `effort=high`, `reasoning_tokens` varió 13 veces (1071 vs. 14356), y el caching que la consigna esperaba demostrar no está disponible en ningún proveedor de DeepSeek detrás de OpenRouter. Para bajar el costo sin perder el "1 prompt" cambiaríamos `reasoning.effort="high"` por `reasoning.max_tokens` con un tope explícito (por ejemplo 1500, apenas por encima de lo que usó el intento ganador): eso acota el gasto máximo por corrida sin necesitar que el caching funcione, algo que no depende del diseño del prompt sino de qué proveedores expone OpenRouter para este modelo.
