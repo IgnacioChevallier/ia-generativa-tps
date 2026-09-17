@@ -173,6 +173,13 @@ registro. Es consistente en magnitud: una sola llamada con `effort=high` ya cost
 `$0.005093` en el ejercicio 2 (intento 3); varias corridas de ese smoke test durante el
 desarrollo explican fácilmente los `$0.0338` de diferencia.
 
+Consultado el grupo, quien armó `openrouter.py` confirma que es probable ("puede ser que
+haya ejecutado antes alguna prueba"), aunque sin recordarlo con precisión, y el grupo no
+tiene acceso al login del dashboard de la cuenta (solo a la API key) para verificar la
+lista de requests una por una. Con esto, la hipótesis queda corroborada por la persona
+mejor posicionada para saberlo, aunque sin confirmación exacta de cuántas corridas ni
+cuáles.
+
 Esto no afecta la admisibilidad del ejercicio 2 (esos 3 intentos sí tienen su log completo
 y están arriba), pero sí significa que el gasto total de la cuenta no es 100% reconstruible
 solo a partir de `logs/` — el smoke test de `openrouter.py` es la fuente de gasto no
