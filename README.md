@@ -34,7 +34,7 @@ consigna). Cada conversación deja un log en `logs/`.
 | `chat_interface.py`          | REPL de la interfaz; muestra usage y escribe el log.                                         |
 | `vida.py`                    | El target del ejercicio 2. **No se edita a mano**: es byte a byte el código del log ganador. |
 | `logs/*.md`                  | Un log por conversación. Evidencia de auditoría: sin log, la corrida no cuenta.              |
-| `prompt_conway_intento1.txt` | El prompt del ejercicio 2.                                                                   |
+| `prompt_conway.txt` | El prompt del ejercicio 2.                                                                   |
 | `informe.md`                 | El informe de los 3 ejercicios (hallazgos, tokens, costos).                                  |
 | `SPEC.md`                    | Qué hace cada componente y qué se decidió no construir.                                      |
 | `CLAUDE.md`                  | Reglas de trabajo del repo.                                                                  |

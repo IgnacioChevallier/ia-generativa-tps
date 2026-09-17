@@ -57,7 +57,7 @@ cual. Generado en 1 prompt contra `deepseek/deepseek-v4-flash-0731` (slot 4) a t
 `informe.md`). No se edita a mano: cualquier cambio necesario se hace reescribiendo el
 prompt y corriendo de nuevo.
 
-### `prompt_conway_intento1.txt`
+### `prompt_conway.txt`
 
 El prompt usado en el ejercicio 2, con los 6 componentes de la clase (rol, contexto,
 instrucciones, restricciones, ejemplos, input). El bloque estático (todo menos el input)

@@ -19,7 +19,7 @@ obligatorio y medición de tokens/costo (ejercicios 2 y 3).
   código que salió del log de la conversación ganadora (ver regla abajo).
 - `logs/*.md` — logs de conversación, uno por archivo. Son la evidencia de auditoría:
   sin log, esa corrida no cuenta para la nota (regla de admisibilidad de la rúbrica).
-- `prompt_conway_intento1.txt` — el prompt del ejercicio 2, para referencia/reuso.
+- `prompt_conway.txt` — el prompt del ejercicio 2, para referencia/reuso.
 - `informe.md` — el informe de los 3 ejercicios.
 - `task/` — consigna y rúbrica de la cátedra, y `task/tests/test_vida.py` (los tests).
 
