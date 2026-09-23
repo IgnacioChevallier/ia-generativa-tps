@@ -32,10 +32,14 @@ Esta carpeta es la raíz de la entrega: los comandos del enunciado se corren **d
 ## Cómo correr
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt "torch==2.2.2" "numpy<2" "transformers<5" "sentence-transformers<6"
 python3 atencion/test_atencion.py atencion.py      # parte 4: 14 tests
 ```
+
+Las versiones fijadas son por la Mac Intel (x86_64): PyTorch no publica wheels para esa
+plataforma después de 2.2.2 (que soporta hasta Python 3.12), y transformers 5 no carga con
+ese torch. En Apple Silicon o Linux alcanza con `pip install -r requirements.txt`.
 
 ## Commits
 
