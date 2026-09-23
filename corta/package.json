@@ -1,0 +1,16 @@
+{
+  "name": "corta",
+  "version": "1.0.0",
+  "description": "acortador de urls interno",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\"",
+    "migrate:seed-legacy": "node scripts/seed-legacy-links.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.13.0"
+  }
+}
