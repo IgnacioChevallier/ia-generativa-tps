@@ -18,7 +18,7 @@ CORPUS = Path(__file__).parent / "datos" / "corpus"
 
 # Configuración ganadora (ver INFORME.md, parte 1).
 CONFIG = {
-    "encoder": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "encoder": "BAAI/bge-m3",
     "pooling": "st",
     "prefijo_pregunta": "",
     "prefijo_fragmento": "",
@@ -26,9 +26,9 @@ CONFIG = {
     "tamano": 60,
     "solapamiento": 20,
     "metadatos": True,
-    "top_k": 1,
+    "top_k": 3,
     "umbral": 0.0,
-    "margen": None,
+    "margen": 0.01,
 }
 
 
