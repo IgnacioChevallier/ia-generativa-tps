@@ -1,0 +1,7 @@
+{
+ "encoder": "BAAI/bge-m3",
+ "pooling": "st",
+ "chunking": "parrafo",
+ "metadatos": false,
+ "top_k": 1
+}

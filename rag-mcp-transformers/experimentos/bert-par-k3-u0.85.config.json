@@ -1,0 +1,8 @@
+{
+ "encoder": "google-bert/bert-base-multilingual-cased",
+ "pooling": "mean",
+ "chunking": "parrafo",
+ "metadatos": true,
+ "top_k": 3,
+ "umbral": 0.85
+}

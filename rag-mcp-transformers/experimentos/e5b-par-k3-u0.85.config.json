@@ -1,0 +1,10 @@
+{
+ "encoder": "intfloat/multilingual-e5-base",
+ "pooling": "st",
+ "prefijo_pregunta": "query: ",
+ "prefijo_fragmento": "passage: ",
+ "chunking": "parrafo",
+ "metadatos": true,
+ "top_k": 3,
+ "umbral": 0.85
+}

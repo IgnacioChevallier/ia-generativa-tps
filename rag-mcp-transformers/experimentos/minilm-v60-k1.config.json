@@ -1,0 +1,9 @@
+{
+ "encoder": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+ "pooling": "st",
+ "chunking": "ventana",
+ "tamano": 60,
+ "solapamiento": 20,
+ "metadatos": true,
+ "top_k": 1
+}

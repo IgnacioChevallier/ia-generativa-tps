@@ -1,0 +1,8 @@
+{
+ "encoder": "BAAI/bge-m3",
+ "pooling": "st",
+ "chunking": "seccion",
+ "metadatos": true,
+ "top_k": 3,
+ "margen": 0.005
+}

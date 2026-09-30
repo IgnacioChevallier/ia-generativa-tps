@@ -1,0 +1,7 @@
+{
+ "encoder": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+ "pooling": "st",
+ "chunking": "parrafo",
+ "metadatos": false,
+ "top_k": 1
+}
