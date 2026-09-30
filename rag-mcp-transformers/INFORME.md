@@ -249,11 +249,126 @@ en dos cuentas; hay que sumar las dos para contrastar con el total de los logs.
 
 ## Parte 3: servidor MCP
 
-_Pendiente._
+### Cómo está hecho
+
+- `servidor_mcp.py` expone las seis herramientas de `hospital.py` con FastMCP del SDK
+  oficial `mcp` (stdio, sin LangChain): `mcp.tool()(f)` aplicado a cada función de
+  `hospital.HERRAMIENTAS`, equivalente a decorarlas ahí mismo pero sin repetir sus firmas.
+  El servidor no tiene código propio para la API ni el recuperador; todo sale de
+  `hospital.py`, el mismo módulo que usa `agente.py` en la parte 2.
+- `agente_mcp.py` es el cliente: descubre las herramientas con `tools/list` y las llama
+  con `tools/call` vía `langchain-mcp-adapters` (`MultiServerMCPClient`, transporte
+  stdio), con el mismo modelo, prompt y formato de log que `agente.py` — reutilizados de
+  ahí (`from agente import ...`) para no duplicar esa lógica. `agente_mcp.py` no tiene
+  ningún código propio para consultar la API ni el recuperador.
+
+### Un bug de Windows que vale la pena documentar
+
+La primera corrida se colgaba sin error en la primera llamada a `buscar_documentos`,
+indefinidamente y con 0% de uso de CPU (se descartó que fuera una descarga lenta: el
+encoder ya estaba cacheado y no había ninguna actividad de red o disco). Aislado paso a
+paso (probando `recuperar.buscar()` fuera de MCP, después con el cliente oficial `mcp` sin
+LangChain, después con `langchain-mcp-adapters`): el cuelgue ocurría en los tres casos
+exactamente en el primer import de `sentence_transformers`/`torch` dentro del proceso del
+servidor. FastMCP despacha cada herramienta en un hilo del executor, no en el hilo
+principal, y en Windows el primer import de una librería con extensiones de C pesadas
+(torch) desde un hilo secundario puede quedar en deadlock contra el *loader lock* del
+sistema — un problema conocido de CPython en Windows, no un bug de `recuperar.py` ni de
+`langchain-mcp-adapters`.
+
+**La solución:** `servidor_mcp.py` precarga el encoder (`recuperar.buscar("precarga")`) en
+el hilo principal, antes de `mcp.run()`. Así el import pesado ocurre donde es seguro, y
+para cuando llega la primera request ya está resuelto. Esto agrega ~20-30 segundos al
+arranque de cada sesión del servidor (ver el costo más abajo), pero sin esto la parte 3
+no corre en Windows.
+
+### Verificación con MCP Inspector
+
+Conectado con `npx @modelcontextprotocol/inspector`, sin ningún LLM de por medio, se
+llamó a las seis herramientas una por una contra la API real. Capturas en
+[experimentos/inspector/](experimentos/inspector/): `01_consultar_espera.jpg`,
+`02_buscar_documentos.jpg`, `03_consultar_camas.jpg`, `04_consultar_guardia.jpg`,
+`05_consultar_turnos.jpg`, `06_consultar_farmacia.jpg`. Las seis devolvieron datos reales
+de la API/recuperador, confirmando que el servidor funciona con un cliente MCP genérico y
+no solo con `agente_mcp.py`.
+
+### Resultados en `dev` (12 preguntas) y comparación con la parte 2
+
+Corrida: [logs/agente_mcp_20260930_153140.md](logs/agente_mcp_20260930_153140.md) ·
+respuestas: [respuestas_mcp.jsonl](respuestas_mcp.jsonl) ·
+evaluación: [respuestas_mcp.jsonl.eval.json](respuestas_mcp.jsonl.eval.json).
+
+| | Ruteo | Context relevance | Faithfulness | Answer relevance | Costo del agente | Costo del juez |
+|---|---|---|---|---|---|---|
+| Parte 2 (LangChain directo) | 1,00 | 5,00 | 5,00 | 5,00 | USD 0,0012 | USD 0,0163 |
+| Parte 3 (servidor MCP) | **1,00** | **5,00** | **5,00** | **5,00** | **USD 0,003235** | USD 0,01856 |
+
+Las cuatro métricas del juez son **idénticas** a la parte 2: mismo modelo, mismo prompt,
+mismas 12 preguntas, y las herramientas hacen exactamente lo mismo de un lado que del
+otro (son las mismas funciones de `hospital.py`), así que no hay razón para que cambien, y
+no cambiaron.
+
+**El costo del agente sí cambió: 2,7 veces más caro** (USD 0,003235 contra USD 0,0012).
+La razón está en los logs, no en el modelo ni el prompt: `langchain-mcp-adapters` abre
+**una sesión MCP nueva por cada llamada a una herramienta** (lo documenta su propio
+`get_tools()`: *"A new session will be created for each tool call"*). Cada sesión nueva es
+un proceso de Python nuevo que tiene que reimportar `sentence_transformers`/`torch` y, en
+las preguntas que usan `buscar_documentos`, recargar el encoder de la parte 1 — el mismo
+costo de arranque que pagó la parte 2 **una sola vez** al iniciar el proceso, la parte 3 lo
+paga de nuevo en cada pregunta que toca documentos. El costo del juez (que no depende de
+la arquitectura del agente, sino de las 12 llamadas al juez sobre el mismo contenido) da
+prácticamente igual en ambas partes, como es de esperar.
+
+**Esto es un costo de la arquitectura MCP tal como la exige la consigna (servidor por
+stdio, sesión nueva por llamada), no de una implementación de menor calidad**: con un
+transporte persistente (por ejemplo streamable-http con un servidor de larga vida) el
+costo por llamada bajaría al nivel de la parte 2, porque el encoder se cargaría una sola
+vez para toda la corrida en lugar de una vez por pregunta.
 
 ## Costo total de la misión
 
-_Pendiente._
+Costos con impacto real en OpenRouter (la parte 1 y la parte 4 corren embeddings y NumPy
+en CPU local, sin llamadas a la API):
+
+| Origen | Agente | Juez | Total |
+|---|---|---|---|
+| Parte 2 | USD 0,0013 (0,0012 corrida final + 0,0001 prueba de humo) | USD 0,01627 | USD 0,01757 |
+| Parte 3 | USD 0,003402 (0,003235 corrida final + 0,000167 prueba de humo) | USD 0,01856 | USD 0,022122 |
+| **Total (documentado en los logs de este repo)** | | | **USD 0,039692** |
+
+### Contra el dashboard de OpenRouter
+
+Consultado el 2026-09-30 vía `GET /api/v1/key` (la cuenta compartida del grupo):
+
+- **Gasto de hoy** (`usage_daily`, el día en que se corrieron las partes 2 y 3): **USD
+  0,038642**.
+- **Gasto total acumulado de la key** (`usage`, desde que se creó): USD 0,109724.
+
+**El gasto de hoy (USD 0,038642) cierra razonablemente contra el total documentado (USD
+0,039692): una diferencia de USD 0,00105 (2,6%)**, coherente con que ambas partes 2 y 3
+se corrieron el mismo día. La diferencia probablemente sale de llamadas de desarrollo que
+no quedaron en ningún log entregado (por ejemplo, alguna iteración exploratoria del agente
+antes de la corrida final).
+
+**El acumulado total (USD 0,109724) no se puede reconciliar completo contra esta misión**,
+por dos razones que conviene dejar explícitas:
+
+1. **Esta key se comparte entre TPs de la materia**: el mismo grupo la usó también para
+   la misión de prompting (`prompting/`), cuyo propio informe ya documentó un gasto total
+   de esa cuenta de USD 0,053963798 al 2026-09-17 — trece días antes de esta entrega, fuera
+   de la ventana de "hoy" o incluso de los últimos 7 días que muestra la API.
+2. **La parte 2 se desarrolló con dos claves distintas**: según su propia sección de
+   costo más arriba, el agente corrió con la clave personal de un integrante y el juez
+   con la de esta cuenta del grupo. El gasto del agente de la parte 2 documentado en la
+   tabla (USD 0,0013) sale de sus logs, no de esta key — así que no está incluido en el
+   `usage` que devuelve esta consulta, y no hay forma de verificarlo por API sin esa otra
+   clave.
+
+**Conclusión de la reconciliación:** el gasto de un día puntual (hoy) cierra con margen
+razonable; el acumulado histórico de la cuenta no, porque mide más gasto que el de esta
+misión (arrastra la otra materia) y menos (le falta una clave personal usada en la parte
+2). Para una reconciliación exacta haría falta que **una sola clave** cubra toda la
+misión, o sumar manualmente el gasto de cada clave usada.
 
 ## Anexo: tabla completa de experimentos de la parte 1
 
