@@ -39,7 +39,7 @@ Esta carpeta es la raíz de la entrega: los comandos del enunciado se corren **d
 
 ```bash
 python3.12 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt "torch==2.2.2" "numpy<2" "transformers<5" "sentence-transformers<6"
+pip install -r requirements.txt "torch==2.2.2" "numpy<2" "transformers<4.50" "sentence-transformers<6"
 python3 atencion/test_atencion.py atencion.py      # parte 4: 14 tests
 pip install pytest && python3 -m pytest tests/     # parte 1: tests propios
 python3 recuperar.py --preguntas datos/preguntas_recuperacion_dev.jsonl --salida resultados.jsonl
@@ -47,7 +47,9 @@ python3 recuperar.py --preguntas datos/preguntas_recuperacion_dev.jsonl --salida
 
 Las versiones fijadas son por la Mac Intel (x86_64): PyTorch no publica wheels para esa
 plataforma después de 2.2.2 (que soporta hasta Python 3.12), y transformers 5 no carga con
-ese torch. En Apple Silicon o Linux alcanza con `pip install -r requirements.txt`.
+ese torch. Además, desde la 4.50, transformers se niega a leer pesos `.bin` con torch < 2.6, y
+`BAAI/bge-m3` (el encoder de la parte 1) solo publica `pytorch_model.bin`: con 4.49 carga.
+En Apple Silicon o Linux alcanza con `pip install -r requirements.txt`.
 
 ## Commits
 
