@@ -163,7 +163,89 @@ orden.
 
 ## Parte 2: agente con dos fuentes
 
-_Pendiente._
+### Cómo está hecho
+
+- `hospital.py` define las seis herramientas como funciones de Python (`buscar_documentos`,
+  `consultar_camas`, `consultar_guardia`, `consultar_turnos`, `consultar_farmacia`,
+  `consultar_espera`). `buscar_documentos` llama a `recuperar.buscar` (la configuración
+  ganadora de la parte 1) y las demás hacen `GET` a la API del hospital. Quedan en un módulo
+  aparte, sin LangChain, para que el servidor MCP de la parte 3 use exactamente las mismas.
+- `agente.py` envuelve cada función como tool de LangChain (`StructuredTool.from_function`, así
+  el docstring pasa a ser la descripción) y arma el agente con `create_agent` sobre
+  `ChatOpenAI(model="deepseek/deepseek-v4-flash-0731", base_url="https://openrouter.ai/api/v1",
+  temperature=0)`. Pide `usage.include` para que OpenRouter devuelva el costo real de cada llamada.
+- Las descripciones dicen para qué preguntas sirve cada herramienta **y para cuáles no** (por
+  ejemplo, `consultar_turnos` aclara que no dice qué documentos llevar). El prompt de sistema
+  fija cuatro reglas: llamar siempre a una herramienta antes de contestar; en las preguntas
+  mixtas llamar a la de la API y también a `buscar_documentos`; contestar solo con lo que
+  devolvieron las herramientas; y si una herramienta devuelve error con opciones válidas,
+  corregir el argumento. Las herramientas devuelven los errores de la API como texto (con la
+  lista de opciones), no como excepción, para que el modelo se corrija solo.
+- Tests propios sin LLM en `tests/test_hospital.py` (contra la API real, levantada en el test) y
+  `tests/test_agente.py` (armado del registro y del log).
+
+### Resultados en `dev` (12 preguntas)
+
+Corrida: [logs/agente_20260930_111531.md](logs/agente_20260930_111531.md) ·
+respuestas: [respuestas.jsonl](respuestas.jsonl) ·
+evaluación: [respuestas.jsonl.eval.json](respuestas.jsonl.eval.json).
+
+| Ruteo | Context relevance | Answer faithfulness | Answer relevance | Costo del agente | Costo del juez |
+|---|---|---|---|---|---|
+| **1,00** | **5,00** | **5,00** | **5,00** | USD 0,0012 | USD 0,0163 |
+
+El agente usó exactamente las herramientas esperadas en las 12 preguntas: una sola en las de
+documentos y en las de API, y las dos en A10, A11 y A12. Una corrida completa son 24 llamadas al
+modelo (dos por pregunta: elegir herramientas y redactar) con 39.196 tokens de entrada y 2.225 de
+salida en total. La mayor parte de la entrada es el prompt de sistema y las descripciones de las
+herramientas que se reenvían en cada llamada.
+
+Se corrió el benchmark una sola vez con el agente final: no hubo iteraciones de prompt, porque la
+primera versión ya llegó al techo del juez. Eso también significa que el prompt **no está
+tuneado a las preguntas `dev`**: no contiene ninguna de ellas ni sus respuestas.
+
+### Análisis de las preguntas donde el agente falló
+
+En la corrida final no hubo ninguna pregunta con nota menor a 5 ni con ruteo incompleto, así que
+no hay un fallo del agente que analizar. Lo que sí hay son tres cosas que observamos en los logs
+y que pueden aparecer en el conjunto de test:
+
+1. **Fallo de infraestructura, no del agente (corrida de prueba con A05 y A10).**
+   [logs/agente_20260930_111305.md](logs/agente_20260930_111305.md) es una prueba de humo con dos
+   preguntas. A05 salió bien, pero A10 quedó vacía (sin herramientas ni respuesta): la descarga de
+   `bge-m3` desde HuggingFace falló por un error de certificado SSL en la computadora donde se
+   corrió, y la excepción se registró como `ERROR` en el log en lugar de tirar abajo toda la
+   corrida. Se arregló usando el almacén de certificados de Windows (`truststore`); no cambia el
+   código entregado.
+2. **A09 (espera en la guardia).** La referencia dice que 135 minutos superan el máximo de 2
+   horas del triage verde, pero el agente solo llamó a `consultar_espera` y respondió "135
+   minutos". El juez le dio 5 porque la pregunta era solo cuánto se espera, pero es el caso más
+   propenso a bajar en test: si la pregunta pide comparar con la norma, hace falta también
+   `buscar_documentos`. La descripción de `consultar_espera` ya lo sugiere, pero el prompt no lo
+   exige.
+3. **Detalle de más (A04, A12).** El agente agregó datos correctos que la pregunta no pedía
+   (intervalos entre donaciones y tatuajes en A04; ubicación y horario de la farmacia en A12).
+   Están respaldados por los contextos, así que no bajan la fidelidad, pero una respuesta más
+   larga tiene más chances de incluir una afirmación que el juez no encuentre en el contexto.
+
+### Límites de esta medición
+
+- Son 12 preguntas y una sola corrida con `temperature=0`; no medimos la variación entre
+  corridas.
+- El juez es un solo modelo con un prompt fijo, y con 5 en las tres métricas no puede
+  distinguir mejoras. La diferencia real entre variantes tendría que verse en el conjunto de
+  test, que no tenemos.
+- La calidad de `buscar_documentos` depende de la parte 1: con `top_k=3` y margen 0,01 el
+  recuperador devolvió un solo fragmento en seis de las siete búsquedas de esta corrida y dos en
+  A10 (la sección "Acompañante" de internación programada y la de pediatría del régimen de visitas).
+
+### Costo de la parte 2
+
+Agente: USD 0,0012 (corrida final) + USD 0,0001 (prueba de humo). Juez: USD 0,0163 según el
+propio `evaluar.py`. Las cifras salen de los logs y del `.eval.json`. Ojo para el cierre: las
+llamadas del agente se hicieron con la clave personal de un integrante y las del juez con la
+clave del grupo, así que el dashboard de actividad de OpenRouter va a mostrar el gasto repartido
+en dos cuentas; hay que sumar las dos para contrastar con el total de los logs.
 
 ## Parte 3: servidor MCP
 
