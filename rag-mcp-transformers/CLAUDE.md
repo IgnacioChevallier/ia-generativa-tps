@@ -19,8 +19,15 @@ Esta carpeta es la raíz de la entrega: los comandos del enunciado se corren **d
   `requirements.txt` — archivos de la cátedra, movidos desde `task/` sin cambios.
 - `recuperar.py` — parte 1. La configuración ganadora queda fija en `CONFIG`; `buscar(pregunta)`
   es lo que usan las herramientas de las partes 2 y 3.
-- `experimentos/` — grilla de la parte 1 (`correr.py`) con un `.eval.json` por configuración.
-- `tests/` — tests propios (parte 1): `python3 -m pytest tests/`.
+- `hospital.py` — las seis herramientas (partes 2 y 3), sin LangChain ni MCP: las envuelve
+  `agente.py` (parte 2) y `servidor_mcp.py` (parte 3), sin duplicar su lógica.
+- `agente.py` / `servidor_mcp.py` + `agente_mcp.py` — parte 2 y parte 3. El servidor
+  precarga el encoder de la parte 1 en el hilo principal antes de `mcp.run()` (ver
+  SPEC.md): necesario en Windows, donde el primer import de `torch` desde un hilo
+  secundario puede colgarse sin error.
+- `experimentos/` — grilla de la parte 1 (`correr.py`) con un `.eval.json` por configuración;
+  `experimentos/inspector/` — capturas de MCP Inspector probando el servidor (parte 3).
+- `tests/` — tests propios: `python3 -m pytest tests/`.
 - `atencion.py` — parte 4.
 
 ## Reglas no negociables

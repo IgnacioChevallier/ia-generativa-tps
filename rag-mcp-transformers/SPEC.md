@@ -50,6 +50,41 @@ Las preguntas `dev` son solo 20. Para no sobreajustar, la elección final prefie
 simples (k chico, umbral o margen redondos) a la fila con el número más alto por una
 pregunta.
 
+## Parte 3: `servidor_mcp.py` y `agente_mcp.py` — las herramientas como servidor MCP
+
+### `servidor_mcp.py`
+
+Expone `hospital.HERRAMIENTAS` con FastMCP del SDK oficial `mcp` (stdio, sin LangChain):
+`mcp.tool()(f)` en un loop, equivalente a decorar cada función con `@mcp.tool()` en el
+lugar pero sin repetir sus firmas a mano. Sin código propio para la API ni el recuperador:
+todo sale de `hospital.py`, el mismo módulo que usa `agente.py`.
+
+Antes de `mcp.run()`, `_precargar_encoder()` llama a `recuperar.buscar("precarga")` en el
+hilo principal. Es necesario: FastMCP despacha cada herramienta en un hilo del executor, y
+en Windows el primer import de `torch` desde un hilo que no es el principal puede quedar
+en deadlock contra el loader lock del sistema (0% CPU, cuelgue indefinido, sin excepción).
+Precargar en el hilo principal evita que la primera llamada a `buscar_documentos` dispare
+ese import desde el hilo equivocado. También fija `HF_HUB_OFFLINE=1` (el encoder ya está
+cacheado localmente, así que no necesita red).
+
+### `agente_mcp.py`
+
+Mismo modelo, prompt y formato de log que `agente.py` (`from agente import MODELO,
+BASE_URL, PROMPT, LOGS, cargar_env, registrar, formatear_log` — nada duplicado). La única
+diferencia real: en vez de envolver `hospital.HERRAMIENTAS` directo, descubre las
+herramientas por MCP con `MultiServerMCPClient` (`langchain-mcp-adapters`), conectado por
+stdio a `servidor_mcp.py`. El `env` de la conexión tiene que pasarse completo
+(`dict(os.environ)`): el SDK de MCP, si no se lo pasás, arranca el subproceso con un
+entorno restringido a una lista corta de variables "seguras", y aunque esa lista sí
+incluye `PATH`, conviene no depender de la lista por defecto para no repetir el problema
+si cambia en una versión futura del SDK.
+
+Verificación: `tests/test_servidor_mcp.py` prueba el servidor con el cliente stdio
+**oficial** (`mcp.client.stdio`), sin pasar por LangChain, contra la API real levantada en
+un puerto libre — igual que `tests/test_hospital.py` en la parte 2. Comprueba los nombres
+y docstrings de las seis herramientas y llama a una de cada tipo (con argumento, sin
+argumento, y el caso de opciones inválidas).
+
 ## Parte 4: `atencion.py` — capa de atención en NumPy
 
 Solo NumPy. Todas las matrices son 2D: una fila por token.
