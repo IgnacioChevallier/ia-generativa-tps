@@ -3,6 +3,53 @@
 Qué se construyó, concretamente. La consigna completa está en
 [task/mission.md](task/mission.md); esto describe la implementación.
 
+## Parte 1: `recuperar.py` — recuperador vectorial
+
+### Contrato
+
+```bash
+python3 recuperar.py --preguntas datos/preguntas_recuperacion_dev.jsonl --salida resultados.jsonl
+```
+
+- Una línea por pregunta: `{"id": ..., "fragmentos": [...]}`, en orden de relevancia.
+- Sin `--config`, usa la configuración ganadora (`CONFIG` en `recuperar.py`). Con
+  `--config archivo.json`, pisa las claves que traiga el archivo (solo para experimentos).
+- Todo corre en CPU y sin red una vez descargados los modelos.
+
+### Configuración
+
+| Clave | Valores | Qué hace |
+|---|---|---|
+| `encoder` | id de Hugging Face | Modelo que calcula los embeddings |
+| `pooling` | `"st"` \| `"mean"` | `st`: el pooling que trae el modelo de sentence-transformers. `mean`: promedio de los vectores de la última capa (la línea de base BERT) |
+| `prefijo_pregunta`, `prefijo_fragmento` | texto | Para e5: `"query: "` y `"passage: "` |
+| `chunking` | `"seccion"` \| `"parrafo"` \| `"ventana"` | Un fragmento por sección `##`, por párrafo, o ventanas de palabras |
+| `tamano`, `solapamiento` | enteros (palabras) | Solo para `ventana` |
+| `metadatos` | bool | Anteponer el título del documento (y la sección en `parrafo`) al fragmento |
+| `top_k` | entero ≥ 1 | Máximo de fragmentos a devolver |
+| `umbral` | coseno | Descarta fragmentos con similitud menor |
+| `margen` | coseno o `null` | Descarta fragmentos a más de `margen` de la similitud del primero |
+
+### Reglas
+
+- **Los fragmentos son texto literal del corpus.** El evaluador busca la evidencia como
+  substring (normalizando espacios y mayúsculas), así que el chunking nunca reescribe el
+  texto: solo lo corta y, con `metadatos`, le antepone título y sección.
+- **Siempre se devuelve al menos un fragmento** (el más parecido), aunque ninguno pase el
+  umbral: devolver cero da recall 0 seguro.
+- `buscar(pregunta)` devuelve lo mismo que el CLI para una pregunta. Es la función que
+  usan las herramientas de las partes 2 y 3.
+
+### Experimentos
+
+`experimentos/correr.py` corre la grilla de configuraciones. Por cada una escribe
+`experimentos/<nombre>.jsonl`, lo evalúa con `evaluar/evaluar.py` sin modificar (que
+genera `<nombre>.jsonl.eval.json`) y arma `experimentos/tabla.md` con todas las filas.
+
+Las preguntas `dev` son solo 20. Para no sobreajustar, la elección final prefiere reglas
+simples (k chico, umbral o margen redondos) a la fila con el número más alto por una
+pregunta.
+
 ## Parte 4: `atencion.py` — capa de atención en NumPy
 
 Solo NumPy. Todas las matrices son 2D: una fila por token.

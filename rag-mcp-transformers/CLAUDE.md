@@ -17,6 +17,10 @@ Esta carpeta es la raíz de la entrega: los comandos del enunciado se corren **d
 - `task/mission.md` — la consigna.
 - `datos/`, `api/`, `evaluar/`, `atencion/test_atencion.py`, `a_mano/ejercicio.md`,
   `requirements.txt` — archivos de la cátedra, movidos desde `task/` sin cambios.
+- `recuperar.py` — parte 1. La configuración ganadora queda fija en `CONFIG`; `buscar(pregunta)`
+  es lo que usan las herramientas de las partes 2 y 3.
+- `experimentos/` — grilla de la parte 1 (`correr.py`) con un `.eval.json` por configuración.
+- `tests/` — tests propios (parte 1): `python3 -m pytest tests/`.
 - `atencion.py` — parte 4.
 
 ## Reglas no negociables
@@ -28,6 +32,8 @@ Esta carpeta es la raíz de la entrega: los comandos del enunciado se corren **d
    oficial `mcp` 1.x, sin LangChain.
 4. **Nunca commitear `.env`** (tiene la `OPENROUTER_API_KEY`).
 5. **La parte 5 se resuelve a mano, sin IA.** No generar sus cuentas ni sus respuestas.
+6. **Cada configuración de la parte 1 que se reporte** tiene que tener su `.eval.json` en
+   `experimentos/`, generado por `evaluar/evaluar.py` sin modificar.
 
 ## Cómo correr
 
@@ -35,6 +41,8 @@ Esta carpeta es la raíz de la entrega: los comandos del enunciado se corren **d
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt "torch==2.2.2" "numpy<2" "transformers<5" "sentence-transformers<6"
 python3 atencion/test_atencion.py atencion.py      # parte 4: 14 tests
+pip install pytest && python3 -m pytest tests/     # parte 1: tests propios
+python3 recuperar.py --preguntas datos/preguntas_recuperacion_dev.jsonl --salida resultados.jsonl
 ```
 
 Las versiones fijadas son por la Mac Intel (x86_64): PyTorch no publica wheels para esa
