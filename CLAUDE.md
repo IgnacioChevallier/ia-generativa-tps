@@ -8,6 +8,8 @@ reglas: antes de tocar algo, leé el `CLAUDE.md` / `README.md` de esa carpeta.
   `prompting/` (las rutas de ese archivo son relativas a esa carpeta).
 - `rag-mcp-transformers/` — ver [rag-mcp-transformers/CLAUDE.md](rag-mcp-transformers/CLAUDE.md).
   Correr sus comandos desde `rag-mcp-transformers/`.
+- `tp-final/` — ver [tp-final/CLAUDE.md](tp-final/CLAUDE.md). Correr sus comandos desde
+  `tp-final/` con `uv run` (entorno propio, `uv sync`).
 
 Nunca commitear `.env` de ningún TP (el `.gitignore` de la raíz los cubre en cualquier nivel).
 Commits: uno por unidad de trabajo real, con mensaje que explica el cambio.
