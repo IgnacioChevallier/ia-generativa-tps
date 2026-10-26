@@ -21,6 +21,15 @@ Esta carpeta es la raíz de la entrega: los comandos del kit se corren **desde a
 - `admision/`, `normas/{original,b,c}/`, `practica/`, `historial/historial.csv`,
   `rag/consultas_dev.jsonl`, `pyproject.toml` — archivos de la cátedra, copiados sin cambios.
 - `uv.lock` — sale de `uv sync`.
+- `curado/` — Parte 1: `oraculo.py` (la ficha correcta, validada contra las 150 fichas de práctica),
+  `clasificar.py`, `costumbres.py`, `trayectorias.py` y `generar_datos.py` (datos de entrenamiento).
+- `buscador.py` + `buscador_expansiones.json` — Parte 2. `entrega.py` es lo único que llama la cátedra.
+- `experimentos/` — grilla del buscador y consultas propias; los resultados quedan en `experimentos/rag/`.
+- `tests/` — `uv run python -m unittest discover -s tests -t .` (sin dependencias nuevas).
+- `INFORME.md`, `README.md`, `costumbres.md`, `historial_clasificado.csv` — entregables. Qué genera cada archivo: README.
+- `datos/` — se regenera con `curado.generar_datos` (determinista); en git solo van `SHA256SUMS` y lo chico.
+
+Los generadores escriben con `\n` aunque se corran en Windows: si agregás uno, pasá `newline="\n"` al escribir.
 
 Entorno: `uv sync`, y todo con `uv run ...`. Si hay otro `VIRTUAL_ENV` activo (p. ej. el de
 `rag-mcp-transformers/`), uv lo ignora y usa `.venv/` de esta carpeta.
