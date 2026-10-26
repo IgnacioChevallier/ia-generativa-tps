@@ -1,0 +1,39 @@
+{
+  "filas": 2000,
+  "por_tipo": {
+    "correcta": 1600,
+    "ruido": 160,
+    "error": 240
+  },
+  "errores_por_norma": {
+    "NOR-ADM-02": {
+      "filas_expuestas": 278,
+      "filas_con_error": 61,
+      "tasa": 0.219
+    },
+    "NOR-ADM-03": {
+      "filas_expuestas": 271,
+      "filas_con_error": 64,
+      "tasa": 0.236
+    },
+    "NOR-COB-04": {
+      "filas_expuestas": 144,
+      "filas_con_error": 18,
+      "tasa": 0.125
+    },
+    "NOR-TDE-04": {
+      "filas_expuestas": 487,
+      "filas_con_error": 97,
+      "tasa": 0.199
+    }
+  },
+  "ruido_por_costumbre": {
+    "voluntariado_mayores_sin_acompanante": 151,
+    "dos_credenciales_prepaga": 9
+  },
+  "ruido_por_operador": {
+    "OP-04": 39,
+    "OP-11": 64,
+    "OP-17": 57
+  }
+}
