@@ -1,0 +1,194 @@
+{
+  "k1=0.9 b=0.3": {
+    "dev": {
+      "recall_evidencia": 0.917,
+      "precision": 0.344,
+      "consultas_con_toda_la_evidencia": 53
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=0.9 b=0.5": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=0.9 b=0.75": {
+    "dev": {
+      "recall_evidencia": 0.892,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 51
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=0.9 b=0.9": {
+    "dev": {
+      "recall_evidencia": 0.892,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 51
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=1.2 b=0.3": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=1.2 b=0.5": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=1.2 b=0.75": {
+    "dev": {
+      "recall_evidencia": 0.892,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 51
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=1.2 b=0.9": {
+    "dev": {
+      "recall_evidencia": 0.892,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 51
+    },
+    "propias": {
+      "recall_evidencia": 0.927,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 38
+    }
+  },
+  "k1=1.5 b=0.3": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=1.5 b=0.5": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=1.5 b=0.75": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.927,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 38
+    }
+  },
+  "k1=1.5 b=0.9": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.927,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 38
+    }
+  },
+  "k1=2.0 b=0.3": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=2.0 b=0.5": {
+    "dev": {
+      "recall_evidencia": 0.908,
+      "precision": 0.344,
+      "consultas_con_toda_la_evidencia": 53
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  },
+  "k1=2.0 b=0.75": {
+    "dev": {
+      "recall_evidencia": 0.908,
+      "precision": 0.344,
+      "consultas_con_toda_la_evidencia": 53
+    },
+    "propias": {
+      "recall_evidencia": 0.927,
+      "precision": 0.333,
+      "consultas_con_toda_la_evidencia": 38
+    }
+  },
+  "k1=2.0 b=0.9": {
+    "dev": {
+      "recall_evidencia": 0.9,
+      "precision": 0.339,
+      "consultas_con_toda_la_evidencia": 52
+    },
+    "propias": {
+      "recall_evidencia": 0.902,
+      "precision": 0.325,
+      "consultas_con_toda_la_evidencia": 37
+    }
+  }
+}
