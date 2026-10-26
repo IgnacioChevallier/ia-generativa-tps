@@ -1,0 +1,34 @@
+{
+  "semilla": 7,
+  "descartes": {},
+  "generadas": {
+    "reales": 1600,
+    "sinteticas": 4000
+  },
+  "generadas_por_version": {
+    "original": 500,
+    "b": 500,
+    "c": 500,
+    "s01": 500,
+    "s02": 500,
+    "s03": 500,
+    "s04": 500,
+    "s05": 500
+  },
+  "pasos_medios": {
+    "reales": 6.13,
+    "sinteticas": 6.18
+  },
+  "composicion": {
+    "reales": {
+      "tokens_por_conversacion": 1613,
+      "porcentaje_sistema": 34.6,
+      "porcentaje_busquedas": 38.4
+    },
+    "sinteticas": {
+      "tokens_por_conversacion": 1627,
+      "porcentaje_sistema": 34.3,
+      "porcentaje_busquedas": 38.8
+    }
+  }
+}
