@@ -18,8 +18,8 @@ Esta carpeta es la raíz de la entrega: los comandos del kit se corren **desde a
 (`tp-final/`), porque asumen `normas/`, `practica/`, `rag/` y `admision/` al lado.
 
 - `task/mission.md`, `task/README.md` — la consigna y el manual del kit.
-- `admision/`, `normas/{original,b,c}/`, `practica/`, `historial/historial.csv`,
-  `rag/consultas_dev.jsonl`, `pyproject.toml` — archivos de la cátedra, copiados sin cambios.
+- `admision/`, `normas/{original,b,c}/`, `practica/`, `historial/{historial.csv,trazas.jsonl}`,
+  `entrenamiento/trazas.jsonl`, `rag/consultas_dev.jsonl`, `pyproject.toml` — archivos de la cátedra, copiados sin cambios.
 - `uv.lock` — sale de `uv sync`.
 - `curado/` — Parte 1: `oraculo.py` (la ficha correcta, validada contra las 150 fichas de práctica),
   `clasificar.py`, `costumbres.py`, `trayectorias.py` y `generar_datos.py` (datos de entrenamiento).
@@ -36,7 +36,7 @@ Entorno: `uv sync`, y todo con `uv run ...`. Si hay otro `VIRTUAL_ENV` activo (p
 
 ## Reglas no negociables
 
-1. **No modificar** `admision/`, `normas/`, `practica/`, `historial/` ni `rag/`: la cátedra
+1. **No modificar** `admision/`, `normas/`, `practica/`, `historial/`, `entrenamiento/` ni `rag/`: la cátedra
    corre con su propia copia de `admision` y con un test secreto de otros casos y normas.
 2. **Nada de números de las normas en el código ni en los pesos**: en el test cambian. Lo
    que cambia lo trae el buscador, que se arma siempre con la carpeta que recibe.
